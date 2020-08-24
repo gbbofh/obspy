@@ -3493,12 +3493,12 @@ seismometer_correction_simulation.html#using-a-resp-file>`_.
             raise TypeError(msg)
         # build temporary stream that has only those traces that are supposed
         # to be used in rotation
+        ot = self.select(network=network, station=station, location=location)
+        ot = (ot.select(channel=channels[0]) + ot.select(channel=channels[1]) +
+              ot.select(channel=channels[2]))
         st = self.select(network=network, station=station, location=location)
         st = (st.select(channel=channels[0]) + st.select(channel=channels[1]) +
               st.select(channel=channels[2]))
-        # remove the original unrotated traces from the stream
-        for tr in st.traces:
-            self.remove(tr)
         # cut data so that we end up with a set of matching pieces for the tree
         # components (i.e. cut away any parts where one of the three components
         # has no data)
@@ -3533,6 +3533,9 @@ seismometer_correction_simulation.html#using-a-resp-file>`_.
                 tr.data = new_data
                 tr.stats.channel = tr.stats.channel[:-1] + component
             self.traces += traces
+        # remove the original unrotated traces from the stream
+        for tr in ot.traces:
+            self.remove(tr)
         return self
 
 
