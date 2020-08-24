@@ -3493,9 +3493,6 @@ seismometer_correction_simulation.html#using-a-resp-file>`_.
             raise TypeError(msg)
         # build temporary stream that has only those traces that are supposed
         # to be used in rotation
-        ot = self.select(network=network, station=station, location=location)
-        ot = (ot.select(channel=channels[0]) + ot.select(channel=channels[1]) +
-              ot.select(channel=channels[2]))
         st = self.select(network=network, station=station, location=location)
         st = (st.select(channel=channels[0]) + st.select(channel=channels[1]) +
               st.select(channel=channels[2]))
@@ -3516,7 +3513,8 @@ seismometer_correction_simulation.html#using-a-resp-file>`_.
         for i in range(num_pieces):
             # three consecutive traces are always the ones that combine for one
             # rotation run
-            traces = [st.pop() for i in range(3)]
+            # traces = [st.pop() for i in range(3)]
+            traces = [st[i] for i in range(3)]
             # paranoid.. do a quick check of the channels again.
             if set([tr.stats.channel for tr in traces]) != set(channels):
                 msg = ("Unexpected behavior in rotation. Please file a bug "
@@ -3534,7 +3532,7 @@ seismometer_correction_simulation.html#using-a-resp-file>`_.
                 tr.stats.channel = tr.stats.channel[:-1] + component
             self.traces += traces
         # remove the original unrotated traces from the stream
-        for tr in ot.traces:
+        for tr in st.traces:
             self.remove(tr)
         return self
 
