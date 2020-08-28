@@ -3500,6 +3500,9 @@ seismometer_correction_simulation.html#using-a-resp-file>`_.
         # components (i.e. cut away any parts where one of the three components
         # has no data)
         st._trim_common_channels()
+        # remove the original unrotated traces from the stream
+        # for tr in st.traces:
+        #     self.remove(tr)
         # sort by start time, so each three consecutive traces can then be used
         # in one rotation run
         st.sort(keys=["starttime"])
@@ -3528,12 +3531,12 @@ seismometer_correction_simulation.html#using-a-resp-file>`_.
                 traces[1], orientation[1]["azimuth"], orientation[1]["dip"],
                 traces[2], orientation[2]["azimuth"], orientation[2]["dip"])
             for tr, new_data, component in zip(traces, zne, "ZNE"):
+
+                # remove the original unrotated traces from the stream
+                self.remove(tr)
                 tr.data = new_data
                 tr.stats.channel = tr.stats.channel[:-1] + component
             self.traces += traces
-        # remove the original unrotated traces from the stream
-        for tr in st.traces:
-            self.remove(tr)
         return self
 
 
