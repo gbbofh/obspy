@@ -12,5 +12,11 @@ def _is_grf(path):
     return True
 
 def _read_grf(path):
-    pass
+    with open(filename, "rb") as fp:
+        while True:
+            try:
+                libgcf.read_grf(fp)
+            except EOFError:
+                break
+        pass
 
