@@ -19,14 +19,17 @@ def is_grf(fp):
 
 
 def read_header(fp):
+    """
+    Read the 13 byte common header for all GRF packets
+    """
     header = fp.read(13)
     hdict = {
     "magic": header[0:3],
-    "version": int.from_bytes(header[3:4], sys.byteorder),
-    "size": int.from_bytes(header[4:6], sys.byteorder, signed=False),
-    "seq": int.from_bytes(header[6:8], sys.byteorder, signed=False),
-    "unit": int.from_bytes(header[8:12], sys.byteorder, signed=False),
-    "type": int.from_bytes(header[3:4], sys.byteorder),
+    "version": header[3:4], sys.byteorder,              # 1 byte
+    "size": header[4:6], sys.byteorder, signed=False,   # 2 bytes
+    "seq": header[6:8], sys.byteorder, signed=False,    # 2 bytes
+    "unit": header[8:12], sys.byteorder, signed=False,  # 4 bytes
+    "type": header[3:4], sys.byteorder,                 # 1 byte
     }
 
     return hdict
@@ -34,6 +37,7 @@ def read_header(fp):
 
 def read_packet(fp):
     header = read_header(fp)
+    packet_data = fp.read(header["size")
 
 
 def read_grf(fp):
