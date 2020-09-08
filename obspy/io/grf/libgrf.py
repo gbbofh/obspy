@@ -2,6 +2,12 @@ import sys
 
 
 def is_grf(fp):
+    """
+    Checks if a GRF packet is valid
+
+    :type fp: file
+    :param fp: A file object pointing to the common header of a GRF packet
+    """
     pos = fp.tell()
     header = fp.read(6)
     fp.seek(pos)
