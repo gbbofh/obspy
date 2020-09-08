@@ -54,9 +54,9 @@ def decode_waveform_int32(waveform):
     try:
         with memoryview(waveform) as m:
             data = [x for x in m.cast("i")]
-            return list(data)
+        return np.array(data, dtype=np.int32)
     except Exception:
-        return None
+        return np.empty(0, dtype=np.int32)
 
 
 def decode_waveform_int24(waveform):
@@ -70,7 +70,7 @@ def decode_waveform_int24(waveform):
     for i in range(0, len(waveform), 3):
         x = int.from_bytes(waveform[i:i + 3], sys.byteorder)
         data.append(x)
-    return data
+    return np.array(data, dtype=np.int32)
 
 
 def decode_waveform_cm8(waveform):
