@@ -15,7 +15,7 @@ def is_grf(fp):
     elif version != 1:
         raise TypeError("File version is not supported.")
     elif size < 13:
-        raise TypeError("Malformed packet size in header.")
+        raise TypeError("Malformed packet size in GRF header.")
 
 
 def read_header(fp):
@@ -36,11 +36,20 @@ def read_header(fp):
 
 
 def decode_waveform_int32(waveform):
-    pass
+    try:
+        with memoryview(waveform) as m:
+            data = [x for x in m.cast("i")]
+            return list(data)
+    except Exception:
+        return None
 
 
 def decode_waveform_int24(waveform):
-    pass
+    data = []
+    for i in range(0, len(waveform), 3):
+        x = int.from_bytes(waveform[i:i + 3], sys.byteorder)
+        data.append(x)
+    return data
 
 
 def decode_waveform_cm8(waveform):
@@ -71,23 +80,26 @@ def parse_data_packet(packet):
         2: decode_waveform_cm8,
     }
 
-    dtype = int.from_bytes(hd["datatype"], sys.byteorder)
-    # TODO: Restructure to make clearer -- use exception handling
-    if dtype in decoders:
-        data = decoders[dtype](packet[75:])
+    try:
+        datatype = int.from_bytes(hd["datatype"], sys.byteorder)
+        data = decoders[datatype](packet[75:])
+        return hd, data
+    except KeyError as e:
+        pass
 
-    return hd, data
+    return hd, None
 
 
 def read_packet(fp):
     handlers = {
+        0: lambda _: [],
         1: parse_data_packet,
     }
 
     header = read_header(fp)
     packet_data = fp.read(header["size"] - 13)
 
-    packet_type = int.from_bytes(header["type"], sys.byteorder, signed = False)
+    packet_type = int.from_bytes(header["type"], sys.byteorder)
     if packet_type in handlers:
         packet_header, data = handlers[packet_type](packet_data)
 
@@ -95,8 +107,9 @@ def read_packet(fp):
 
 
 def read_grf(fp):
+    packets = []
     while True:
         try:
-            packet = read_packet(fp)
+            packets.append(read_packet(fp))
         except EOFError:
             break;
