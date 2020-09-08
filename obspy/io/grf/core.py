@@ -1,5 +1,3 @@
-import numpy as np
-
 from obspy import Stream, Trace
 from . import libgrf
 
@@ -16,6 +14,7 @@ def _is_grf(path):
     except Exception:
         return False
     return True
+
 
 def _read_grf(path):
     """

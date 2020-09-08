@@ -1,6 +1,6 @@
 import sys
 import numpy as np
-from obspy.core.trace import Trace
+from obspy import Stream, Trace
 
 
 def is_grf(fp):
@@ -35,7 +35,7 @@ def read_header(fp):
     """
     header = fp.read(13)
     hdict = {
-        "magic": header[1:3],
+        "magic": header[0:3],
         "version": header[3:4], # 1 byte
         "size": header[4:6],    # 2 bytes
         "seq": header[6:8],     # 2 bytes
@@ -93,19 +93,19 @@ def parse_data_packet(packet):
     """
     # Double check these offsets against the spec
     hd = {
-        "channel_number": header[0:2],
-        "network": header[2:10],
-        "station": header[10:26],
-        "component": header[26:34],
-        "time_quality": header[34:35],
-        "rate_quality": header[35:36],
-        "start_time": header[36:44],
-        "time_correction": header[44:52],
-        "sample_rate": header[52:60],
-        "sample_correction"]: header[60:68],
-        "cpv": header[68:72],
-        "datatype": header[72:73],
-        "num_samples": header[73:75],
+        "channel_number": packet[0:2],
+        "network": packet[2:10],
+        "station": packet[10:26],
+        "component": packet[26:34],
+        "time_quality": packet[34:35],
+        "rate_quality": packet[35:36],
+        "start_time": packet[36:44],
+        "time_correction": packet[44:52],
+        "sample_rate": packet[52:60],
+        "sample_correction": packet[60:68],
+        "cpv": packet[68:72],
+        "datatype": packet[72:73],
+        "num_samples": packet[73:75],
     }
 
     decoders = {
@@ -137,7 +137,8 @@ def read_packet(fp):
     }
 
     header = read_header(fp)
-    packet_data = fp.read(header["size"] - 13)
+    size = int.from_bytes(header["size"], sys.byteorder)
+    packet_data = fp.read(size - 13)
 
     packet_type = int.from_bytes(header["type"], sys.byteorder)
     if packet_type in handlers:
