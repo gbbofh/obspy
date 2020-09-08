@@ -15,8 +15,8 @@ def is_grf(fp):
     fp.seek(pos)
 
     magic = header[0:3]
-    version = int.from_bytes(header[3:4], sys.byteorder)
-    size = int.from_bytes(header[4:6], sys.byteorder, signed=False)
+    version = int.from_bytes(header[3:4], byteorder='big')
+    size = int.from_bytes(header[4:6], byteorder='big', signed=False)
 
     if magic != b"GRF":
         raise TypeError("File is not in GRF format.")
@@ -69,7 +69,7 @@ def decode_waveform_int24(waveform):
     """
     data = []
     for i in range(0, len(waveform), 3):
-        x = int.from_bytes(waveform[i:i + 3], sys.byteorder)
+        x = int.from_bytes(waveform[i:i + 3], byteorder='big')
         data.append(x)
     return np.array(data, dtype=np.int32)
 
@@ -91,7 +91,6 @@ def parse_data_packet(packet):
     :type packet: bytes
     :param packet: A bytes object containing the GRF packet and header
     """
-    # Double check these offsets against the spec
     hd = {
         "channel_number": packet[0:2],
         "network": packet[2:10],
@@ -107,7 +106,6 @@ def parse_data_packet(packet):
         "datatype": packet[72:73],
         "num_samples": packet[73:75],
     }
-
     decoders = {
         0: decode_waveform_int32,
         1: decode_waveform_int24,
@@ -115,7 +113,7 @@ def parse_data_packet(packet):
     }
 
     try:
-        datatype = int.from_bytes(hd["datatype"], sys.byteorder)
+        datatype = int.from_bytes(hd["datatype"], byteorder='big')
         data = decoders[datatype](packet[75:])
         return hd, data
     except KeyError as e:
@@ -132,20 +130,23 @@ def read_packet(fp):
     :param fp: A file object pointing to the GRF packet to be read
     """
     handlers = {
-        0: lambda _: [],
+        0: lambda _: (dict(), np.empty(0, dtype=np.int32)),
         1: parse_data_packet,
     }
 
     header = read_header(fp)
-    size = int.from_bytes(header["size"], sys.byteorder)
+    size = int.from_bytes(header["size"], byteorder='big')
     packet_data = fp.read(size - 13)
 
-    packet_type = int.from_bytes(header["type"], sys.byteorder)
-    if packet_type in handlers:
+    packet_type = int.from_bytes(header["type"], byteorder='big')
+
+    try:
         packet_header, data = handlers[packet_type](packet_data)
+        return (header, packet_header, data)
+    except KeyError:
+        pass
 
-    return (header, packet_header, data)
-
+    return (header, None)
 
 def read_grf(fp):
     """
@@ -158,8 +159,7 @@ def read_grf(fp):
     :param fp: A file object pointing to the first packet in the file
     """
     packets = []
-    while True:
-        try:
-            packets.append(read_packet(fp))
-        except EOFError:
-            break;
+    while fp.read(1):
+        fp.seek(-1,1)
+        packets.append(read_packet(fp))
+    return packets
