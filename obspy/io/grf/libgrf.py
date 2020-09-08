@@ -1,4 +1,5 @@
 import sys
+import numpy as np
 
 
 def is_grf(fp):
@@ -53,8 +54,7 @@ def decode_waveform_int32(waveform):
     """
     try:
         with memoryview(waveform) as m:
-            data = [x for x in m.cast("i")]
-        return np.array(data, dtype=np.int32)
+            return np.array(m.cast("i"), dtype=np.int32)
     except Exception:
         return np.empty(0, dtype=np.int32)
 
@@ -148,6 +148,9 @@ def read_packet(fp):
 def read_grf(fp):
     """
     Reads a GRF file containing one or more GRF packets
+
+    Currently only supports two packet types: empty, and data.
+    Connection packets are not supported.
 
     :type fp: file
     :param fp: A file object pointing to the first packet in the file
