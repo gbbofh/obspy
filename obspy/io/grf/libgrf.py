@@ -1,5 +1,6 @@
 import sys
 import numpy as np
+from obspy.core.trace import Trace
 
 
 def is_grf(fp):
