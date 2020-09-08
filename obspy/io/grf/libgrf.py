@@ -20,11 +20,14 @@ def is_grf(fp):
 
 def read_header(fp):
     """
-    Read the 13 byte common header for all GRF packets
+    Read the 13 byte header that wraps all GRF packets
+
+    :type fp: file
+    :param fp: File object containing GRF data
     """
     header = fp.read(13)
     hdict = {
-        "magic": header[0:3],
+        "magic": header[1:3],
         "version": header[3:4], # 1 byte
         "size": header[4:6],    # 2 bytes
         "seq": header[6:8],     # 2 bytes
@@ -36,6 +39,12 @@ def read_header(fp):
 
 
 def decode_waveform_int32(waveform):
+    """
+    Decodes a waveform stored as a signed 32-bit integer
+
+    :type waveform: bytes
+    :param waveform: A bytes object with len % 4 == 0
+    """
     try:
         with memoryview(waveform) as m:
             data = [x for x in m.cast("i")]
@@ -45,6 +54,12 @@ def decode_waveform_int32(waveform):
 
 
 def decode_waveform_int24(waveform):
+    """
+    Decodes a waveform stored as a signed 24-bit integer
+
+    :type waveform: bytes
+    :param waveform: A bytes object with len % 3 == 0
+    """
     data = []
     for i in range(0, len(waveform), 3):
         x = int.from_bytes(waveform[i:i + 3], sys.byteorder)
@@ -53,10 +68,22 @@ def decode_waveform_int24(waveform):
 
 
 def decode_waveform_cm8(waveform):
+    """
+    Decodes a waveform compressed using the CM8 algorithm.
+
+    :type waveform: bytes
+    :param waveform: A bytes object containing the compressed data
+    """
     pass
 
 
 def parse_data_packet(packet):
+    """
+    Parses a GRF data packet and returns the header and decoded data
+
+    :type packet: bytes
+    :param packet: A bytes object containing the GRF packet and header
+    """
     # Double check these offsets against the spec
     hd = {
         "channel_number": header[0:2],
@@ -91,6 +118,12 @@ def parse_data_packet(packet):
 
 
 def read_packet(fp):
+    """
+    Reads a packet and decodes it using the appropriate handler
+
+    :type fp: file
+    :param fp: A file object pointing to the GRF packet to be read
+    """
     handlers = {
         0: lambda _: [],
         1: parse_data_packet,
@@ -107,6 +140,12 @@ def read_packet(fp):
 
 
 def read_grf(fp):
+    """
+    Reads a GRF file containing one or more GRF packets
+
+    :type fp: file
+    :param fp: A file object pointing to the first packet in the file
+    """
     packets = []
     while True:
         try:
